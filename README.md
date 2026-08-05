@@ -88,56 +88,6 @@ ShopeeFlow automates this entire workflow using business rules, allowing new pro
 
 ---
 
-## 🔄 Application Workflow
-
-```text
-Authenticate
-
-      │
-
-      ▼
-
-Search Products
-
-      │
-
-      ▼
-
-Apply Business Rules
-
-      │
-
-      ▼
-
-Calculate Score
-
-      │
-
-      ▼
-
-Generate Affiliate Links
-
-      │
-
-      ▼
-
-Store Approved Products
-
-      │
-
-      ▼
-
-Publication Queue
-
-      │
-
-      ▼
-
-Publish to WhatsApp
-```
-
----
-
 ## 🧠 Score Engine
 
 Every product receives a dynamic score calculated using configurable business rules.
