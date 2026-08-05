@@ -244,7 +244,3 @@ dotnet run
 This project is being developed as a personal study and automation project focused on backend architecture, API integration, background processing and business rule implementation.
 
 ---
-
-## 📄 License
-
-This project is licensed under the MIT License.
