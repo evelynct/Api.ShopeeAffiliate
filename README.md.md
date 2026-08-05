@@ -22,7 +22,7 @@ Documentação oficial utilizada como referência:
 
 Backend
 
-* .NET 9  
+* .NET 8
 * ASP.NET Core Web API
 
 Persistência
