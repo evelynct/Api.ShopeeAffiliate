@@ -1,0 +1,5 @@
+@ShopeeFlow_HostAddress = http://localhost:5227
+
+### Search product offers (auth + productOfferV2)
+GET {{ShopeeFlow_HostAddress}}/ProductOffer?sortType=2&limit=1
+Accept: application/json

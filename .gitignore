@@ -1,0 +1,36 @@
+# Build
+bin/
+obj/
+
+# Visual Studio
+.vs/
+
+# VS Code
+.vscode/
+
+# User files
+*.user
+*.suo
+
+# Logs
+*.log
+
+# NuGet
+packages/
+
+# Rider
+.idea/
+
+# Environment / secrets (never commit real credentials)
+.env
+appsettings.json
+appsettings.Development.json
+**/appsettings.json
+**/appsettings.Development.json
+
+# Keep the empty template committed
+!**/appsettings.Product.json
+
+# OS
+Thumbs.db
+.DS_Store
