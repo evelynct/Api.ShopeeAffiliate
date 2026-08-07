@@ -1,7 +1,9 @@
+using System.Globalization;
 using System.Net;
 using ShopeeFlow.DTOs.Common;
 using ShopeeFlow.DTOs.Shopee;
 using ShopeeFlow.Enums;
+using ShopeeFlow.Helpers;
 using ShopeeFlow.Integrations.Shopee;
 using ShopeeFlow.Integrations.Shopee.Contracts;
 using ShopeeFlow.Interfaces.Integrations;
@@ -42,7 +44,28 @@ public class ProductOfferService : IProductOfferService
                 HttpStatusCode.BadGateway);
         }
 
+        ApplyDerivedPrices(offers.Nodes);
         return Result<ProductOfferListResponseDto>.Ok(offers);
+    }
+
+    private static void ApplyDerivedPrices(List<ProductOfferV2Dto> offers)
+    {
+        foreach (var offer in offers)
+        {
+            if (!decimal.TryParse(
+                    offer.Price,
+                    NumberStyles.Number,
+                    CultureInfo.InvariantCulture,
+                    out var currentPrice))
+            {
+                continue;
+            }
+
+            offer.OriginalPrice = ProductPricing.CalculateOriginalPrice(
+                currentPrice,
+                offer.PriceDiscountRate);
+            offer.Savings = offer.OriginalPrice - currentPrice;
+        }
     }
 
     private static string? ValidateRequest(SearchProductOffersRequest request)
