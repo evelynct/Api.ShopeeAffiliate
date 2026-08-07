@@ -70,15 +70,6 @@ public class ProductOfferService : IProductOfferService
 
     private static string? ValidateRequest(SearchProductOffersRequest request)
     {
-        if (request.Page < ProductOfferLimits.MinimumPage)
-            return $"Page must be greater than or equal to {ProductOfferLimits.MinimumPage}.";
-
-        if (request.Limit < ProductOfferLimits.MinimumLimit
-            || request.Limit > ProductOfferLimits.MaximumLimit)
-        {
-            return $"Limit must be between {ProductOfferLimits.MinimumLimit} and {ProductOfferLimits.MaximumLimit}.";
-        }
-
         if (RequiresMatchId(request.ListType) && !request.MatchId.HasValue)
             return $"MatchId is required when ListType is {request.ListType}.";
 

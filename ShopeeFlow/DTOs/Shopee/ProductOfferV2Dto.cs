@@ -79,9 +79,6 @@ public class ProductOfferV2Dto
     [JsonPropertyName("shopeeCommissionRate")]
     public string? ShopeeCommissionRate { get; set; }
 
-    /// <summary>Price before discount (calculated). Not from Shopee.</summary>
     public decimal? OriginalPrice { get; set; }
-
-    /// <summary>OriginalPrice - current price (calculated).</summary>
     public decimal? Savings { get; set; }
 }

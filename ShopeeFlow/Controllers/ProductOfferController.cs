@@ -5,9 +5,6 @@ using ShopeeFlow.Interfaces.Services;
 
 namespace ShopeeFlow.Controllers;
 
-/// <summary>
-/// Product offers from Shopee Affiliate Open API (productOfferV2).
-/// </summary>
 [ApiController]
 [Route("[controller]")]
 [Produces("application/json")]
@@ -24,18 +21,11 @@ public class ProductOfferController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Search product offers (Shopee productOfferV2).
-    /// </summary>
+    /// <summary>Search product offers (Shopee productOfferV2).</summary>
     /// <remarks>
-    /// Calls Shopee GraphQL with SHA256 auth.
     /// Tip: SortType=5 (CommissionDesc) + IsAmsOffer=true usually returns stronger commissions.
     /// AMS = Affiliate Marketing Solution (seller campaigns with affiliate payout).
     /// </remarks>
-    /// <response code="200">Offer list returned.</response>
-    /// <response code="400">Invalid filters.</response>
-    /// <response code="401">Shopee auth/signature failed.</response>
-    /// <response code="429">Shopee rate limit.</response>
     [HttpGet]
     [ProducesResponseType(typeof(BaseResponse<ProductOfferListResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BaseResponse), StatusCodes.Status400BadRequest)]

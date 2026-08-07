@@ -2,9 +2,6 @@ using System.ComponentModel;
 
 namespace ShopeeFlow.Enums;
 
-/// <summary>
-/// Product offer list type (Shopee productOfferV2.listType).
-/// </summary>
 public enum ProductOfferListType
 {
     [Description("All offers")]

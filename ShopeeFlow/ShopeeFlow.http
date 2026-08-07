@@ -1,5 +1,7 @@
 @ShopeeFlow_HostAddress = http://localhost:5227
+@ApiToken = PASTE_TOKEN_FROM_APPSETTINGS_ApiSecurity_AccessToken
 
-### Search product offers (auth + productOfferV2)
-GET {{ShopeeFlow_HostAddress}}/ProductOffer?sortType=2&limit=1
+### Search product offers (requires X-Api-Key)
+GET {{ShopeeFlow_HostAddress}}/ProductOffer?sortType=5&isAmsOffer=true&limit=1
 Accept: application/json
+X-Api-Key: {{ApiToken}}

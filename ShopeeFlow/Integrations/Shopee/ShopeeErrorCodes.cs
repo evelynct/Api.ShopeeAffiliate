@@ -1,8 +1,5 @@
 namespace ShopeeFlow.Integrations.Shopee;
 
-/// <summary>
-/// Official Shopee Affiliate Open API error codes (GraphQL extensions.code).
-/// </summary>
 public static class ShopeeErrorCodes
 {
     public const int SystemError = 10000;

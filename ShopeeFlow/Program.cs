@@ -1,8 +1,10 @@
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
 using ShopeeFlow.Configurations;
 using ShopeeFlow.Integrations.Shopee;
 using ShopeeFlow.Interfaces.Integrations;
 using ShopeeFlow.Interfaces.Services;
+using ShopeeFlow.Middleware;
 using ShopeeFlow.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,11 +13,34 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    options.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "ShopeeFlow API",
         Version = "v1",
-        Description = "Personal Shopee Affiliate automation API."
+        Description = "Personal Shopee Affiliate automation API. Use header X-Api-Key with ApiSecurity:AccessToken."
+    });
+
+    options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
+    {
+        Description = "API token from local appsettings (ApiSecurity:AccessToken).",
+        Name = ApiSecuritySettings.HeaderName,
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "ApiKey"
+                }
+            },
+            Array.Empty<string>()
+        }
     });
 
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -32,6 +57,12 @@ builder.Services
     .AddOptions<ShopeeAffiliateSettings>()
     .Bind(builder.Configuration.GetSection(ShopeeAffiliateSettings.SectionName))
     .Validate(settings => settings.HasRequiredValues(), "ShopeeAffiliate: BaseUrl, AppId and Secret are required.")
+    .ValidateOnStart();
+
+builder.Services
+    .AddOptions<ApiSecuritySettings>()
+    .Bind(builder.Configuration.GetSection(ApiSecuritySettings.SectionName))
+    .Validate(settings => settings.HasRequiredValues(), "ApiSecurity: AccessToken is required.")
     .ValidateOnStart();
 
 builder.Services.AddSingleton<IShopeeSignatureService, ShopeeSignatureService>();
@@ -52,6 +83,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseMiddleware<ApiTokenMiddleware>();
 app.MapControllers();
 
 app.Run();

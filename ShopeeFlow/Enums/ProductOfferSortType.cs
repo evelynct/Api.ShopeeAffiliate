@@ -2,9 +2,6 @@ using System.ComponentModel;
 
 namespace ShopeeFlow.Enums;
 
-/// <summary>
-/// Product offer sort (Shopee productOfferV2.sortType).
-/// </summary>
 public enum ProductOfferSortType
 {
     [Description("Relevance — only with Keyword")]
