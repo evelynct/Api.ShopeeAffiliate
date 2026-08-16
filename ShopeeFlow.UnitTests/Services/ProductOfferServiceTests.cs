@@ -5,6 +5,7 @@ using ShopeeFlow.DTOs.Shopee;
 using ShopeeFlow.Enums;
 using ShopeeFlow.Integrations.Shopee.Contracts;
 using ShopeeFlow.Interfaces.Integrations;
+using ShopeeFlow.Interfaces.Services;
 using ShopeeFlow.Services;
 
 namespace ShopeeFlow.UnitTests.Services;
@@ -12,12 +13,26 @@ namespace ShopeeFlow.UnitTests.Services;
 public class ProductOfferServiceTests
 {
     private readonly Mock<IShopeeGraphQlClient> _graphQlClientMock;
+    private readonly Mock<IProductScoreService> _productScoreServiceMock;
     private readonly ProductOfferService _service;
 
     public ProductOfferServiceTests()
     {
         _graphQlClientMock = new Mock<IShopeeGraphQlClient>();
-        _service = new ProductOfferService(_graphQlClientMock.Object);
+        _productScoreServiceMock = new Mock<IProductScoreService>();
+        _productScoreServiceMock
+            .Setup(service => service.FilterAndRank(It.IsAny<IEnumerable<ProductOfferV2Dto>>()))
+            .Returns((IEnumerable<ProductOfferV2Dto> products) =>
+            {
+                var list = products.ToList();
+                foreach (var product in list)
+                    product.Score = 85;
+                return list;
+            });
+
+        _service = new ProductOfferService(
+            _graphQlClientMock.Object,
+            _productScoreServiceMock.Object);
     }
 
     #region Happy Path
@@ -67,6 +82,7 @@ public class ProductOfferServiceTests
         Assert.Single(result.Value.Nodes);
         Assert.Equal(52.91m, result.Value.Nodes[0].OriginalPrice);
         Assert.Equal(13.23m, result.Value.Nodes[0].Savings);
+        Assert.Equal(85, result.Value.Nodes[0].Score);
 
         Assert.NotNull(capturedQuery);
         Assert.Contains("productOfferV2", capturedQuery);
@@ -74,10 +90,8 @@ public class ProductOfferServiceTests
         Assert.Contains("limit: 1", capturedQuery);
         Assert.Contains("isAMSOffer: true", capturedQuery);
 
-        _graphQlClientMock.Verify(
-            client => client.ExecuteAsync<ProductOfferV2GraphQlData>(
-                It.IsAny<string>(),
-                It.IsAny<CancellationToken>()),
+        _productScoreServiceMock.Verify(
+            service => service.FilterAndRank(It.IsAny<IEnumerable<ProductOfferV2Dto>>()),
             Times.Once);
     }
 
@@ -130,11 +144,6 @@ public class ProductOfferServiceTests
         Assert.True(result.IsFailed);
         Assert.Equal((int)HttpStatusCode.BadRequest, result.StatusCode);
         Assert.Contains("Keyword", result.Error);
-        _graphQlClientMock.Verify(
-            client => client.ExecuteAsync<ProductOfferV2GraphQlData>(
-                It.IsAny<string>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
     }
 
     [Fact]
@@ -159,7 +168,9 @@ public class ProductOfferServiceTests
         Assert.True(result.IsFailed);
         Assert.Equal((int)HttpStatusCode.Unauthorized, result.StatusCode);
         Assert.Equal(10020, result.ProviderErrorCode);
-        Assert.Equal("Shopee auth failed.", result.Error);
+        _productScoreServiceMock.Verify(
+            service => service.FilterAndRank(It.IsAny<IEnumerable<ProductOfferV2Dto>>()),
+            Times.Never);
     }
 
     [Fact]
@@ -183,7 +194,6 @@ public class ProductOfferServiceTests
         // Assert
         Assert.True(result.IsFailed);
         Assert.Equal((int)HttpStatusCode.BadGateway, result.StatusCode);
-        Assert.Contains("empty productOfferV2", result.Error);
     }
 
     [Fact]

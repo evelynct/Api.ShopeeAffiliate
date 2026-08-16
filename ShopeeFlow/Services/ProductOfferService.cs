@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Net;
 using ShopeeFlow.DTOs.Common;
 using ShopeeFlow.DTOs.Shopee;
@@ -14,24 +13,24 @@ namespace ShopeeFlow.Services;
 public class ProductOfferService : IProductOfferService
 {
     private readonly IShopeeGraphQlClient _shopeeGraphQlClient;
+    private readonly IProductScoreService _productScoreService;
 
-    public ProductOfferService(IShopeeGraphQlClient shopeeGraphQlClient)
+    public ProductOfferService(
+        IShopeeGraphQlClient shopeeGraphQlClient,
+        IProductScoreService productScoreService)
     {
         _shopeeGraphQlClient = shopeeGraphQlClient;
+        _productScoreService = productScoreService;
     }
 
-    public async Task<Result<ProductOfferListResponseDto>> SearchAsync(
-        SearchProductOffersRequest request,
-        CancellationToken cancellationToken = default)
+    public async Task<Result<ProductOfferListResponseDto>> SearchAsync(SearchProductOffersRequest request, CancellationToken cancellationToken = default)
     {
         var validationError = ValidateRequest(request);
         if (validationError is not null)
             return Result<ProductOfferListResponseDto>.Fail(validationError, HttpStatusCode.BadRequest);
 
         var query = ProductOfferQueryBuilder.Build(request);
-        var graphQlResult = await _shopeeGraphQlClient.ExecuteAsync<ProductOfferV2GraphQlData>(
-            query,
-            cancellationToken);
+        var graphQlResult = await _shopeeGraphQlClient.ExecuteAsync<ProductOfferV2GraphQlData>(query, cancellationToken);
 
         if (graphQlResult.IsFailed)
             return Result<ProductOfferListResponseDto>.FailFrom(graphQlResult);
@@ -39,31 +38,30 @@ public class ProductOfferService : IProductOfferService
         var offers = graphQlResult.Value?.ProductOfferV2;
         if (offers is null)
         {
-            return Result<ProductOfferListResponseDto>.Fail(
-                "Shopee returned an empty productOfferV2 payload.",
-                HttpStatusCode.BadGateway);
+            return Result<ProductOfferListResponseDto>.Fail("Shopee returned an empty productOfferV2 payload.", HttpStatusCode.BadGateway);
         }
 
         ApplyDerivedPrices(offers.Nodes);
+        offers.Nodes ??= [];
+        offers.PageInfo ??= new ProductOfferPageInfoDto();
+        offers.Nodes = _productScoreService.FilterAndRank(offers.Nodes);
+
         return Result<ProductOfferListResponseDto>.Ok(offers);
     }
 
-    private static void ApplyDerivedPrices(List<ProductOfferV2Dto> offers)
+    private static void ApplyDerivedPrices(List<ProductOfferV2Dto>? offers)
     {
+        if (offers is null)
+            return;
+
         foreach (var offer in offers)
         {
-            if (!decimal.TryParse(
-                    offer.Price,
-                    NumberStyles.Number,
-                    CultureInfo.InvariantCulture,
-                    out var currentPrice))
-            {
-                continue;
-            }
+            offer.ProductCatIds ??= [];
 
-            offer.OriginalPrice = ProductPricing.CalculateOriginalPrice(
-                currentPrice,
-                offer.PriceDiscountRate);
+            if (!ProductValueParser.TryParseDecimal(offer.Price, out var currentPrice))
+                continue;
+
+            offer.OriginalPrice = ProductPricing.CalculateOriginalPrice(currentPrice, offer.PriceDiscountRate);
             offer.Savings = offer.OriginalPrice - currentPrice;
         }
     }
@@ -73,8 +71,7 @@ public class ProductOfferService : IProductOfferService
         if (RequiresMatchId(request.ListType) && !request.MatchId.HasValue)
             return $"MatchId is required when ListType is {request.ListType}.";
 
-        if (request.SortType == ProductOfferSortType.RelevanceDesc
-            && string.IsNullOrWhiteSpace(request.Keyword))
+        if (request.SortType == ProductOfferSortType.RelevanceDesc && string.IsNullOrWhiteSpace(request.Keyword))
         {
             return "Keyword is required when SortType is RelevanceDesc.";
         }

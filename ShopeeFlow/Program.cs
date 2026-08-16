@@ -65,7 +65,14 @@ builder.Services
     .Validate(settings => settings.HasRequiredValues(), "ApiSecurity: AccessToken is required.")
     .ValidateOnStart();
 
+builder.Services
+    .AddOptions<ScoringSettings>()
+    .Bind(builder.Configuration.GetSection(ScoringSettings.SectionName))
+    .Validate(settings => settings.HasRequiredValues(), "Scoring: AllowedCategories must contain at least one category id.")
+    .ValidateOnStart();
+
 builder.Services.AddSingleton<IShopeeSignatureService, ShopeeSignatureService>();
+builder.Services.AddScoped<IProductScoreService, ProductScoreService>();
 builder.Services.AddScoped<IProductOfferService, ProductOfferService>();
 
 builder.Services.AddHttpClient<IShopeeGraphQlClient, ShopeeGraphQlClient>((serviceProvider, client) =>

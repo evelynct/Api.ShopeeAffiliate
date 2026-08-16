@@ -81,4 +81,5 @@ public class ProductOfferV2Dto
 
     public decimal? OriginalPrice { get; set; }
     public decimal? Savings { get; set; }
+    public int? Score { get; set; }
 }

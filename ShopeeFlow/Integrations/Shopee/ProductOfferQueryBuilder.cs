@@ -43,9 +43,7 @@ public static class ProductOfferQueryBuilder
     public static string Build(SearchProductOffersRequest request)
     {
         var arguments = BuildArguments(request);
-        var argsBlock = arguments.Count == 0
-            ? string.Empty
-            : $"({string.Join(", ", arguments)})";
+        var argsBlock = arguments.Count == 0 ? string.Empty : $"({string.Join(", ", arguments)})";
 
         return $$"""
             {
