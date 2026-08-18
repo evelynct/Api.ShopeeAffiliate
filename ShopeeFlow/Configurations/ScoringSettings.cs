@@ -9,9 +9,4 @@ public class ScoringSettings
     public decimal MinimumRating { get; set; } = 4.0m;
     public decimal MinimumCommissionRatePercent { get; set; } = 10m;
     public decimal MinimumCommissionValue { get; set; } = 10m;
-
-    public List<int> AllowedCategories { get; set; } = [];
-    public List<int> BlockedCategories { get; set; } = [];
-
-    public bool HasRequiredValues() => AllowedCategories.Count > 0;
 }

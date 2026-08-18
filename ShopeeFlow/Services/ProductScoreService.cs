@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using ShopeeFlow.Catalog;
 using ShopeeFlow.Configurations;
 using ShopeeFlow.DTOs.Shopee;
 using ShopeeFlow.Helpers;
@@ -59,20 +60,20 @@ public class ProductScoreService : IProductScoreService
         return true;
     }
 
-    private bool HasBlockedCategory(ProductOfferV2Dto product)
+    private static bool HasBlockedCategory(ProductOfferV2Dto product)
     {
-        if (_settings.BlockedCategories.Count == 0)
+        if (ProductCategoryCatalog.BlockedIds.Count == 0)
             return false;
 
-        return product.ProductCatIds.Any(categoryId => _settings.BlockedCategories.Contains(categoryId));
+        return product.ProductCatIds.Any(ProductCategoryCatalog.BlockedIds.Contains);
     }
 
-    private bool BelongsToAllowedNiche(ProductOfferV2Dto product)
+    private static bool BelongsToAllowedNiche(ProductOfferV2Dto product)
     {
-        if (_settings.AllowedCategories.Count == 0)
+        if (ProductCategoryCatalog.AllowedIds.Count == 0)
             return false;
 
-        return product.ProductCatIds.Any(categoryId => _settings.AllowedCategories.Contains(categoryId));
+        return product.ProductCatIds.Any(ProductCategoryCatalog.AllowedIds.Contains);
     }
 
     private bool PassesCommissionHardFilter(ProductOfferV2Dto product)

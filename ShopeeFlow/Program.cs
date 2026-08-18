@@ -67,9 +67,7 @@ builder.Services
 
 builder.Services
     .AddOptions<ScoringSettings>()
-    .Bind(builder.Configuration.GetSection(ScoringSettings.SectionName))
-    .Validate(settings => settings.HasRequiredValues(), "Scoring: AllowedCategories must contain at least one category id.")
-    .ValidateOnStart();
+    .Bind(builder.Configuration.GetSection(ScoringSettings.SectionName));
 
 builder.Services.AddSingleton<IShopeeSignatureService, ShopeeSignatureService>();
 builder.Services.AddScoped<IProductScoreService, ProductScoreService>();

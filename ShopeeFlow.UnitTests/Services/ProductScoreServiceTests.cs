@@ -26,7 +26,7 @@ public class ProductScoreServiceTests
             commission: "18.00",
             rating: "4.85",
             discountPercent: 40,
-            categoryIds: [100636]);
+            categoryIds: [101219]);
 
         // Act
         var result = _service.FilterAndRank([product]);
@@ -51,7 +51,7 @@ public class ProductScoreServiceTests
             commission: "40.00",
             rating: "4.95",
             discountPercent: 60,
-            categoryIds: [100636],
+            categoryIds: [101219],
             itemId: 2);
 
         var weaker = CreateValidProduct(
@@ -60,7 +60,7 @@ public class ProductScoreServiceTests
             commission: "10.00",
             rating: "4.55",
             discountPercent: 25,
-            categoryIds: [100636],
+            categoryIds: [101219],
             itemId: 1);
 
         // Act
@@ -80,13 +80,10 @@ public class ProductScoreServiceTests
     public void FilterAndRank_WhenCategoryIsBlocked_RejectsProduct()
     {
         // Arrange
-        var settings = CreateDefaultSettings();
-        settings.BlockedCategories = [999001];
-        var service = new ProductScoreService(Options.Create(settings));
-        var product = CreateValidProduct(categoryIds: [999001, 100636]);
+        var product = CreateValidProduct(categoryIds: [100017, 101219]);
 
         // Act
-        var result = service.FilterAndRank([product]);
+        var result = _service.FilterAndRank([product]);
 
         // Assert
         Assert.Empty(result);
@@ -264,9 +261,7 @@ public class ProductScoreServiceTests
         MinimumPrice = 50m,
         MinimumRating = 4.0m,
         MinimumCommissionRatePercent = 10m,
-        MinimumCommissionValue = 10m,
-        AllowedCategories = [100636, 100717, 101233],
-        BlockedCategories = []
+        MinimumCommissionValue = 10m
     };
 
     private static ProductOfferV2Dto CreateValidProduct(
@@ -286,7 +281,7 @@ public class ProductScoreServiceTests
             Commission = commission,
             RatingStar = rating,
             PriceDiscountRate = discountPercent,
-            ProductCatIds = categoryIds?.ToList() ?? [100636],
+            ProductCatIds = categoryIds?.ToList() ?? [101219],
             ProductName = "Produto Casa Teste"
         };
     }
