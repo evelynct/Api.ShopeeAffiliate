@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using ShopeeFlow.Configurations;
+using ShopeeFlow.Data;
 using ShopeeFlow.Integrations.Shopee;
+using ShopeeFlow.Interfaces.Data;
 using ShopeeFlow.Interfaces.Integrations;
 using ShopeeFlow.Interfaces.Services;
 using ShopeeFlow.Middleware;
@@ -69,7 +71,12 @@ builder.Services
     .AddOptions<ScoringSettings>()
     .Bind(builder.Configuration.GetSection(ScoringSettings.SectionName));
 
+builder.Services
+    .AddOptions<PersistenceSettings>()
+    .Bind(builder.Configuration.GetSection(PersistenceSettings.SectionName));
+
 builder.Services.AddSingleton<IShopeeSignatureService, ShopeeSignatureService>();
+builder.Services.AddSingleton<IPublishedProductDAO, PublishedProductDAO>();
 builder.Services.AddScoped<IProductScoreService, ProductScoreService>();
 builder.Services.AddScoped<IProductOfferService, ProductOfferService>();
 

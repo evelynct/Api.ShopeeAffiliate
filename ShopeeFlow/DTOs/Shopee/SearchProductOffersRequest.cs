@@ -24,9 +24,9 @@ public class SearchProductOffersRequest
     [Range(ProductOfferLimits.MinimumPage, int.MaxValue)]
     public int Page { get; set; } = ProductOfferLimits.MinimumPage;
 
-    /// <summary>Items per page (1–500). Default 20.</summary>
+    /// <summary>Items per page (1–500). Default 50.</summary>
     [Range(ProductOfferLimits.MinimumLimit, ProductOfferLimits.MaximumLimit)]
-    public int Limit { get; set; } = 20;
+    public int Limit { get; set; } = 50;
 
     /// <summary>Filter by product item id.</summary>
     public long? ItemId { get; set; }

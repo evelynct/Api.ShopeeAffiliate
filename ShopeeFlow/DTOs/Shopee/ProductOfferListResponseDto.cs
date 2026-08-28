@@ -9,4 +9,13 @@ public class ProductOfferListResponseDto
 
     [JsonPropertyName("pageInfo")]
     public ProductOfferPageInfoDto PageInfo { get; set; } = new();
+
+    [JsonPropertyName("dailyCollectedCount")]
+    public int DailyCollectedCount { get; set; }
+
+    [JsonPropertyName("dailyCollectLimit")]
+    public int DailyCollectLimit { get; set; }
+
+    [JsonPropertyName("insertedCount")]
+    public int InsertedCount { get; set; }
 }

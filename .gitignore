@@ -1,6 +1,8 @@
 # Build
 bin/
 obj/
+artifacts/
+TestResults/
 
 # Visual Studio
 .vs/
@@ -30,6 +32,11 @@ appsettings.Development.json
 
 # Keep the empty template committed
 !**/appsettings.Product.json
+
+# SQLite
+*.db
+*.db-shm
+*.db-wal
 
 # OS
 Thumbs.db
