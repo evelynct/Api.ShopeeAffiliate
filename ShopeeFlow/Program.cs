@@ -2,10 +2,13 @@ using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using ShopeeFlow.Configurations;
 using ShopeeFlow.Data;
+using ShopeeFlow.Integrations.Ai;
 using ShopeeFlow.Integrations.Shopee;
+using ShopeeFlow.Integrations.WhatsApp;
 using ShopeeFlow.Interfaces.Data;
 using ShopeeFlow.Interfaces.Integrations;
 using ShopeeFlow.Interfaces.Services;
+using ShopeeFlow.Jobs;
 using ShopeeFlow.Middleware;
 using ShopeeFlow.Services;
 
@@ -75,11 +78,24 @@ builder.Services
     .AddOptions<PersistenceSettings>()
     .Bind(builder.Configuration.GetSection(PersistenceSettings.SectionName));
 
+builder.Services
+    .AddOptions<AiSettings>()
+    .Bind(builder.Configuration.GetSection(AiSettings.SectionName));
+
+builder.Services
+    .AddOptions<PostingSettings>()
+    .Bind(builder.Configuration.GetSection(PostingSettings.SectionName));
+
 builder.Services.AddSingleton<IShopeeSignatureService, ShopeeSignatureService>();
 builder.Services.AddSingleton<IPublishedProductDAO, PublishedProductDAO>();
 builder.Services.AddScoped<IProductScoreService, ProductScoreService>();
 builder.Services.AddScoped<IProductOfferService, ProductOfferService>();
+builder.Services.AddScoped<IProductPostMessageBuilder, ProductPostMessageBuilder>();
+builder.Services.AddScoped<IProductPostingService, ProductPostingService>();
+builder.Services.AddSingleton<IWhatsAppSender, LoggingWhatsAppSender>();
+builder.Services.AddHostedService<ProductPostingBackgroundService>();
 
+builder.Services.AddHttpClient<IGeminiHeadlineClient, GeminiHeadlineClient>();
 builder.Services.AddHttpClient<IShopeeGraphQlClient, ShopeeGraphQlClient>((serviceProvider, client) =>
 {
     var settings = serviceProvider.GetRequiredService<IOptions<ShopeeAffiliateSettings>>().Value;
