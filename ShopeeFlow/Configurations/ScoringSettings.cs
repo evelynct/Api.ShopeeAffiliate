@@ -5,7 +5,7 @@ public class ScoringSettings
     public const string SectionName = "Scoring";
 
     public int MinimumScore { get; set; } = 70;
-    public decimal MinimumPrice { get; set; } = 50m;
+    public decimal MinimumPrice { get; set; } = 20m;
     public decimal MinimumRating { get; set; } = 4.0m;
     public decimal MinimumCommissionRatePercent { get; set; } = 10m;
     public decimal MinimumCommissionValue { get; set; } = 10m;

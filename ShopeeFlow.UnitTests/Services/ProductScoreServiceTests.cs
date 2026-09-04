@@ -120,7 +120,44 @@ public class ProductScoreServiceTests
     public void FilterAndRank_WhenPriceBelowMinimum_RejectsProduct()
     {
         // Arrange
-        var product = CreateValidProduct(price: "49.99");
+        var product = CreateValidProduct(price: "19.99");
+
+        // Act
+        var result = _service.FilterAndRank([product]);
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void FilterAndRank_WhenPriceAtMinimum_AcceptsWhenCommissionFloorsPass()
+    {
+        // Arrange
+        var looseSettings = CreateDefaultSettings();
+        looseSettings.MinimumScore = 0;
+        var service = new ProductScoreService(Options.Create(looseSettings));
+        var product = CreateValidProduct(
+            price: "20.00",
+            commissionRate: "0.50",
+            commission: "10.00",
+            rating: "4.90",
+            discountPercent: 50);
+
+        // Act
+        var result = service.FilterAndRank([product]);
+
+        // Assert
+        Assert.Single(result);
+    }
+
+    [Fact]
+    public void FilterAndRank_WhenPriceAtMinimumButCommissionValueBelowFloor_RejectsProduct()
+    {
+        // Arrange
+        var product = CreateValidProduct(
+            price: "20.00",
+            commissionRate: "0.10",
+            commission: "2.00");
 
         // Act
         var result = _service.FilterAndRank([product]);
@@ -131,7 +168,9 @@ public class ProductScoreServiceTests
 
     [Theory]
     [InlineData("0.08", "4.00")]
-    public void FilterAndRank_WhenCommissionFailsDualFloor_RejectsProduct(
+    [InlineData("0.12", "6.00")]
+    [InlineData("0.10", "9.99")]
+    public void FilterAndRank_WhenCommissionValueBelowMinimum_RejectsProduct(
         string commissionRate,
         string commission)
     {
@@ -147,11 +186,33 @@ public class ProductScoreServiceTests
         Assert.Empty(result);
     }
 
+    [Fact]
+    public void FilterAndRank_WhenCommissionRateIsLowButValueMeetsMinimum_AcceptsProduct()
+    {
+        // Arrange — R$ 200 @ 7% = R$ 14
+        var looseSettings = CreateDefaultSettings();
+        looseSettings.MinimumScore = 0;
+        var service = new ProductScoreService(Options.Create(looseSettings));
+        var product = CreateValidProduct(
+            price: "200.00",
+            commissionRate: "0.07",
+            commission: "14.00",
+            rating: "4.90",
+            discountPercent: 30);
+
+        // Act
+        var result = service.FilterAndRank([product]);
+
+        // Assert
+        Assert.Single(result);
+    }
+
     [Theory]
-    [InlineData("0.08", "12.00")]
-    [InlineData("0.12", "6.00")]
+    [InlineData("0.12", "12.00")]
+    [InlineData("0.10", "10.00")]
     [InlineData("0.05", "15.00")]
-    public void FilterAndRank_WhenCommissionPassesDualFloor_ProductIsNotHardFiltered(
+    [InlineData("0.07", "14.00")]
+    public void FilterAndRank_WhenCommissionValueMeetsMinimum_ProductIsNotHardFiltered(
         string commissionRate,
         string commission)
     {
@@ -193,8 +254,8 @@ public class ProductScoreServiceTests
         // Arrange
         // Passes hard filters but weak score: low rate just over dual floor via value, tiny discount, rating 4.0
         var product = CreateValidProduct(
-            price: "50.00",
-            commissionRate: "0.05",
+            price: "20.00",
+            commissionRate: "0.10",
             commission: "10.00",
             rating: "4.0",
             discountPercent: 2);
@@ -231,15 +292,15 @@ public class ProductScoreServiceTests
         var service = new ProductScoreService(Options.Create(looseSettings));
 
         var low = CreateValidProduct(
-            price: "50.00",
-            commissionRate: "0.05",
+            price: "20.00",
+            commissionRate: "0.10",
             commission: "10.00",
             rating: rating,
             discountPercent: 0);
 
         var baseline = CreateValidProduct(
-            price: "50.00",
-            commissionRate: "0.05",
+            price: "20.00",
+            commissionRate: "0.10",
             commission: "10.00",
             rating: "4.0",
             discountPercent: 0,
@@ -258,7 +319,7 @@ public class ProductScoreServiceTests
     private static ScoringSettings CreateDefaultSettings() => new()
     {
         MinimumScore = 70,
-        MinimumPrice = 50m,
+        MinimumPrice = 20m,
         MinimumRating = 4.0m,
         MinimumCommissionRatePercent = 10m,
         MinimumCommissionValue = 10m

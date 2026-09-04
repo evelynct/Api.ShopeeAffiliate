@@ -21,13 +21,14 @@ public class ProductOfferController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>Search product offers (Shopee productOfferV2).</summary>
+    /// <summary>Collect qualified product offers into the SQLite queue (paginates until daily limit or no more pages).</summary>
     /// <remarks>
-    /// Tip: SortType=5 (CommissionDesc) + IsAmsOffer=true usually returns stronger commissions.
-    /// AMS = Affiliate Marketing Solution (seller campaigns with affiliate payout).
+    /// Default collect profile: ListType=2 (Top Performing) + IsAmsOffer=true.
+    /// SortType=5 (CommissionDesc) is sent but Shopee may ignore it on curated lists.
+    /// Limit controls page size per Shopee request (default 50); the endpoint keeps paging until the daily quota is filled.
     /// </remarks>
     [HttpGet]
-    [ProducesResponseType(typeof(BaseResponse<ProductOfferListResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseResponse<ScheduledCollectResultDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BaseResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(BaseResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(BaseResponse), StatusCodes.Status429TooManyRequests)]
@@ -37,7 +38,7 @@ public class ProductOfferController : ControllerBase
     {
         try
         {
-            var result = await _productOfferService.SearchAsync(request, cancellationToken);
+            var result = await _productOfferService.CollectAllPagesAsync(request, cancellationToken);
             if (result.IsFailed)
             {
                 return StatusCode(result.StatusCode, new BaseResponse
@@ -46,7 +47,7 @@ public class ProductOfferController : ControllerBase
                 });
             }
 
-            return Ok(new BaseResponse<ProductOfferListResponseDto>
+            return Ok(new BaseResponse<ScheduledCollectResultDto>
             {
                 Data = result.Value
             });

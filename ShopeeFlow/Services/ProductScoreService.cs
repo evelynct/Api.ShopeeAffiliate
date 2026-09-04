@@ -78,13 +78,8 @@ public class ProductScoreService : IProductScoreService
 
     private bool PassesCommissionHardFilter(ProductOfferV2Dto product)
     {
-        var hasRate = ProductValueParser.TryParseCommissionRatePercent(product.CommissionRate, out var ratePercent);
-        var hasValue = ProductValueParser.TryParseDecimal(product.Commission, out var commissionValue);
-
-        var rateOk = hasRate && ratePercent >= _settings.MinimumCommissionRatePercent;
-        var valueOk = hasValue && commissionValue >= _settings.MinimumCommissionValue;
-
-        return rateOk || valueOk;
+        return ProductValueParser.TryParseDecimal(product.Commission, out var commissionValue)
+            && commissionValue >= _settings.MinimumCommissionValue;
     }
 
     private static int CalculateScore(ProductOfferV2Dto product)
