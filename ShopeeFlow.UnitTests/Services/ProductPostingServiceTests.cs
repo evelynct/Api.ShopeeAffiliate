@@ -61,7 +61,7 @@ public class ProductPostingServiceTests
 
         Assert.True(posted);
         _whatsAppSenderMock.Verify(
-            sender => sender.SendTextAsync("mensagem pronta", It.IsAny<CancellationToken>()),
+            sender => sender.SendProductPostAsync("mensagem pronta", product.ImageUrl, It.IsAny<CancellationToken>()),
             Times.Once);
         _publishedProductDAOMock.Verify(
             dao => dao.MarkAsPostedAsync(42, It.IsAny<CancellationToken>()),

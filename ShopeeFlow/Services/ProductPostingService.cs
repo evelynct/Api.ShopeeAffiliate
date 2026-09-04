@@ -30,7 +30,7 @@ public class ProductPostingService : IProductPostingService
             return false;
 
         var message = await _messageBuilder.BuildAsync(product, cancellationToken);
-        await _whatsAppSender.SendTextAsync(message, cancellationToken);
+        await _whatsAppSender.SendProductPostAsync(message, product.ImageUrl, cancellationToken);
 
         var marked = await _publishedProductDAO.MarkAsPostedAsync(product.ItemId, cancellationToken);
         if (!marked)

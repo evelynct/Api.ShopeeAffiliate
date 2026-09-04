@@ -11,9 +11,16 @@ public class LoggingWhatsAppSender : IWhatsAppSender
         _logger = logger;
     }
 
-    public Task SendTextAsync(string message, CancellationToken cancellationToken = default)
+    public Task SendProductPostAsync(
+        string caption,
+        string? imageUrl,
+        CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("[WhatsApp stub] Message ready to send:{NewLine}{Message}", Environment.NewLine, message);
+        _logger.LogInformation(
+            "[WhatsApp stub] Product post ready to send. ImageUrl={ImageUrl}{NewLine}{Caption}",
+            string.IsNullOrWhiteSpace(imageUrl) ? "(none)" : imageUrl,
+            Environment.NewLine,
+            caption);
         return Task.CompletedTask;
     }
 }

@@ -2,5 +2,8 @@ namespace ShopeeFlow.Interfaces.Integrations;
 
 public interface IWhatsAppSender
 {
-    Task SendTextAsync(string message, CancellationToken cancellationToken = default);
+    Task SendProductPostAsync(
+        string caption,
+        string? imageUrl,
+        CancellationToken cancellationToken = default);
 }
