@@ -90,6 +90,10 @@ builder.Services
     .AddOptions<GreenApiSettings>()
     .Bind(builder.Configuration.GetSection(GreenApiSettings.SectionName));
 
+builder.Services
+    .AddOptions<CollectSettings>()
+    .Bind(builder.Configuration.GetSection(CollectSettings.SectionName));
+
 builder.Services.AddSingleton<IShopeeSignatureService, ShopeeSignatureService>();
 builder.Services.AddSingleton<IPublishedProductDAO, PublishedProductDAO>();
 builder.Services.AddScoped<IProductScoreService, ProductScoreService>();
@@ -106,6 +110,7 @@ builder.Services.AddSingleton<IWhatsAppSender>(serviceProvider =>
 
     return serviceProvider.GetRequiredService<LoggingWhatsAppSender>();
 });
+builder.Services.AddHostedService<ProductCollectBackgroundService>();
 builder.Services.AddHostedService<ProductPostingBackgroundService>();
 
 builder.Services.AddHttpClient<IGeminiHeadlineClient, GeminiHeadlineClient>();

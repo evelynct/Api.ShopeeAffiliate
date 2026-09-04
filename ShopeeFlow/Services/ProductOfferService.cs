@@ -85,6 +85,57 @@ public class ProductOfferService : IProductOfferService
         return Result<ProductOfferListResponseDto>.Ok(offers);
     }
 
+    public async Task<Result<ScheduledCollectResultDto>> CollectAllPagesAsync(
+        SearchProductOffersRequest requestTemplate,
+        CancellationToken cancellationToken = default)
+    {
+        var pagesProcessed = 0;
+        var insertedCount = 0;
+        var page = ProductOfferLimits.MinimumPage;
+        string? scrollId = null;
+        var dailyCollectedCount = 0;
+        var dailyCollectLimit = 0;
+
+        while (true)
+        {
+            var request = CloneRequest(requestTemplate, page, scrollId);
+
+            var result = await SearchAsync(request, cancellationToken);
+            if (result.IsFailed)
+                return Result<ScheduledCollectResultDto>.FailFrom(result);
+
+            pagesProcessed++;
+            insertedCount += result.Value!.InsertedCount;
+            dailyCollectedCount = result.Value.DailyCollectedCount;
+            dailyCollectLimit = result.Value.DailyCollectLimit;
+
+            if (dailyCollectedCount >= dailyCollectLimit && dailyCollectLimit > 0)
+                break;
+
+            if (!result.Value.PageInfo.HasNextPage)
+                break;
+
+            if (pagesProcessed >= 100)
+            {
+                _logger.LogWarning(
+                    "[ProductOfferService -> CollectAllPagesAsync]: stopped after {PagesProcessed} pages (safety limit).",
+                    pagesProcessed);
+                break;
+            }
+
+            scrollId = result.Value.PageInfo.ScrollId;
+            page = result.Value.PageInfo.Page > 0 ? result.Value.PageInfo.Page + 1 : page + 1;
+        }
+
+        return Result<ScheduledCollectResultDto>.Ok(new ScheduledCollectResultDto
+        {
+            PagesProcessed = pagesProcessed,
+            InsertedCount = insertedCount,
+            DailyCollectedCount = dailyCollectedCount,
+            DailyCollectLimit = dailyCollectLimit
+        });
+    }
+
     private async Task TryCleanupPublishedProductsAsync(CancellationToken cancellationToken)
     {
         try
@@ -149,6 +200,28 @@ public class ProductOfferService : IProductOfferService
         }
 
         return null;
+    }
+
+    private static SearchProductOffersRequest CloneRequest(
+        SearchProductOffersRequest template,
+        int page,
+        string? scrollId)
+    {
+        return new SearchProductOffersRequest
+        {
+            ListType = template.ListType,
+            MatchId = template.MatchId,
+            Keyword = template.Keyword,
+            SortType = template.SortType,
+            Page = page,
+            Limit = template.Limit,
+            ItemId = template.ItemId,
+            ShopId = template.ShopId,
+            ProductCatId = template.ProductCatId,
+            IsAmsOffer = template.IsAmsOffer,
+            IsKeySeller = template.IsKeySeller,
+            ScrollId = scrollId
+        };
     }
 
     private static bool RequiresMatchId(ProductOfferListType? listType)

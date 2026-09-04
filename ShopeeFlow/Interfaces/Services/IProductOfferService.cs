@@ -5,7 +5,7 @@ namespace ShopeeFlow.Interfaces.Services;
 
 public interface IProductOfferService
 {
-    Task<Result<ProductOfferListResponseDto>> SearchAsync(
-        SearchProductOffersRequest request,
-        CancellationToken cancellationToken = default);
+    Task<Result<ProductOfferListResponseDto>> SearchAsync(SearchProductOffersRequest request,CancellationToken cancellationToken = default);
+
+    Task<Result<ScheduledCollectResultDto>> CollectAllPagesAsync(SearchProductOffersRequest requestTemplate,CancellationToken cancellationToken = default);
 }
