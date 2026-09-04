@@ -158,6 +158,43 @@ public sealed class PublishedProductDAO : IPublishedProductDAO, IDisposable
         }
     }
 
+    public async Task<PublishedProductSearchResult> SearchAsync(
+        PublishedProductSearchFilter filter,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureInitializedAsync(cancellationToken);
+
+        var pageNumber = filter.PageNumber > 0 ? filter.PageNumber : 1;
+        var pageSize = filter.PageSize is > 0 and <= 100 ? filter.PageSize : 20;
+        var offset = (pageNumber - 1) * pageSize;
+
+        await using var connection = await OpenConnectionAsync(cancellationToken);
+
+        var (postedCount, pendingCount) = await CountPostedAndPendingAsync(
+            connection,
+            filter.CreatedFromUnix,
+            filter.CreatedToUnix,
+            cancellationToken);
+
+        var whereClause = BuildSearchWhereClause(filter, out var parameters);
+        var totalRecords = await CountSearchAsync(connection, whereClause, parameters, cancellationToken);
+        var items = await ReadSearchPageAsync(
+            connection,
+            whereClause,
+            parameters,
+            pageSize,
+            offset,
+            cancellationToken);
+
+        return new PublishedProductSearchResult
+        {
+            Items = items,
+            TotalRecords = totalRecords,
+            PostedCount = postedCount,
+            PendingCount = pendingCount
+        };
+    }
+
     public async Task CleanupIfDueAsync(CancellationToken cancellationToken = default)
     {
         await EnsureInitializedAsync(cancellationToken);
@@ -351,6 +388,128 @@ public sealed class PublishedProductDAO : IPublishedProductDAO, IDisposable
         command.Parameters.AddWithValue("@endUnix", endUnix);
         var value = await command.ExecuteScalarAsync(cancellationToken);
         return Convert.ToInt32(value, CultureInfo.InvariantCulture);
+    }
+
+    private static string BuildSearchWhereClause(
+        PublishedProductSearchFilter filter,
+        out List<SqliteParameter> parameters)
+    {
+        parameters = [];
+        var conditions = new List<string>();
+
+        if (filter.CreatedFromUnix.HasValue)
+        {
+            conditions.Add("CreatedAt >= @createdFrom");
+            parameters.Add(new SqliteParameter("@createdFrom", filter.CreatedFromUnix.Value));
+        }
+
+        if (filter.CreatedToUnix.HasValue)
+        {
+            conditions.Add("CreatedAt < @createdTo");
+            parameters.Add(new SqliteParameter("@createdTo", filter.CreatedToUnix.Value));
+        }
+
+        if (filter.IsPosted.HasValue)
+        {
+            conditions.Add("IsPosted = @isPosted");
+            parameters.Add(new SqliteParameter("@isPosted", filter.IsPosted.Value ? 1 : 0));
+        }
+
+        return conditions.Count == 0 ? string.Empty : $"WHERE {string.Join(" AND ", conditions)}";
+    }
+
+    private static async Task<int> CountSearchAsync(
+        SqliteConnection connection,
+        string whereClause,
+        IReadOnlyList<SqliteParameter> parameters,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandTimeout = CommandTimeoutSeconds;
+        command.CommandText = $"""
+            SELECT COUNT(*)
+            FROM PublishedProduct
+            {whereClause}
+            """;
+        AddParameters(command, parameters);
+
+        var value = await command.ExecuteScalarAsync(cancellationToken);
+        return Convert.ToInt32(value, CultureInfo.InvariantCulture);
+    }
+
+    private static async Task<(int PostedCount, int PendingCount)> CountPostedAndPendingAsync(
+        SqliteConnection connection,
+        long? createdFromUnix,
+        long? createdToUnix,
+        CancellationToken cancellationToken)
+    {
+        var conditions = new List<string>();
+        await using var command = connection.CreateCommand();
+        command.CommandTimeout = CommandTimeoutSeconds;
+
+        if (createdFromUnix.HasValue)
+        {
+            conditions.Add("CreatedAt >= @createdFrom");
+            command.Parameters.AddWithValue("@createdFrom", createdFromUnix.Value);
+        }
+
+        if (createdToUnix.HasValue)
+        {
+            conditions.Add("CreatedAt < @createdTo");
+            command.Parameters.AddWithValue("@createdTo", createdToUnix.Value);
+        }
+
+        var whereClause = conditions.Count == 0 ? string.Empty : $"WHERE {string.Join(" AND ", conditions)}";
+        command.CommandText = $"""
+            SELECT
+                COALESCE(SUM(CASE WHEN IsPosted = 1 THEN 1 ELSE 0 END), 0),
+                COALESCE(SUM(CASE WHEN IsPosted = 0 THEN 1 ELSE 0 END), 0)
+            FROM PublishedProduct
+            {whereClause}
+            """;
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        await reader.ReadAsync(cancellationToken);
+        return (reader.GetInt32(0), reader.GetInt32(1));
+    }
+
+    private static async Task<List<PublishedProduct>> ReadSearchPageAsync(
+        SqliteConnection connection,
+        string whereClause,
+        IReadOnlyList<SqliteParameter> parameters,
+        int pageSize,
+        int offset,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandTimeout = CommandTimeoutSeconds;
+        command.CommandText = $"""
+            SELECT
+                Id, ItemId, IsPosted, CreatedAt, PostedAt,
+                ProductName, ImageUrl, OfferLink, ProductLink,
+                Price, OriginalPrice, Savings, Commission, CommissionRate,
+                PriceDiscountRate, RatingStar, Sales, ShopId, ShopName, Score, ProductCatIds
+            FROM PublishedProduct
+            {whereClause}
+            ORDER BY Id DESC
+            LIMIT @pageSize OFFSET @offset
+            """;
+        AddParameters(command, parameters);
+        command.Parameters.AddWithValue("@pageSize", pageSize);
+        command.Parameters.AddWithValue("@offset", offset);
+
+        var items = new List<PublishedProduct>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+            items.Add(MapPublishedProduct(reader));
+
+        return items;
+    }
+
+    private static void AddParameters(SqliteCommand command, IReadOnlyList<SqliteParameter> parameters)
+    {
+        foreach (var parameter in parameters)
+            command.Parameters.Add(new SqliteParameter(parameter.ParameterName, parameter.Value));
     }
 
     private static async Task<bool> TryInsertQualifiedAsync(

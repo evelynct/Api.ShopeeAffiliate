@@ -98,6 +98,7 @@ builder.Services.AddSingleton<IShopeeSignatureService, ShopeeSignatureService>()
 builder.Services.AddSingleton<IPublishedProductDAO, PublishedProductDAO>();
 builder.Services.AddScoped<IProductScoreService, ProductScoreService>();
 builder.Services.AddScoped<IProductOfferService, ProductOfferService>();
+builder.Services.AddScoped<IPublishedProductService, PublishedProductService>();
 builder.Services.AddScoped<IProductPostMessageBuilder, ProductPostMessageBuilder>();
 builder.Services.AddScoped<IProductPostingService, ProductPostingService>();
 builder.Services.AddSingleton<LoggingWhatsAppSender>();

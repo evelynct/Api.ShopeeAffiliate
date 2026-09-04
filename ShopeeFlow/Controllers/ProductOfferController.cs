@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using ShopeeFlow.Configurations;
 using ShopeeFlow.DTOs.Common;
 using ShopeeFlow.DTOs.Shopee;
 using ShopeeFlow.Interfaces.Services;
@@ -11,20 +13,22 @@ namespace ShopeeFlow.Controllers;
 public class ProductOfferController : ControllerBase
 {
     private readonly IProductOfferService _productOfferService;
+    private readonly CollectSettings _collectSettings;
     private readonly ILogger<ProductOfferController> _logger;
 
     public ProductOfferController(
         IProductOfferService productOfferService,
+        IOptions<CollectSettings> collectSettings,
         ILogger<ProductOfferController> logger)
     {
         _productOfferService = productOfferService;
+        _collectSettings = collectSettings.Value;
         _logger = logger;
     }
 
     /// <summary>Collect qualified product offers into the SQLite queue (paginates until daily limit or no more pages).</summary>
     /// <remarks>
-    /// Default collect profile: ListType=2 (Top Performing) + IsAmsOffer=true.
-    /// SortType=5 (CommissionDesc) is sent but Shopee may ignore it on curated lists.
+    /// Omit query params to use Collect settings from appsettings (Casa + commission sort).
     /// Limit controls page size per Shopee request (default 50); the endpoint keeps paging until the daily quota is filled.
     /// </remarks>
     [HttpGet]
@@ -38,7 +42,8 @@ public class ProductOfferController : ControllerBase
     {
         try
         {
-            var result = await _productOfferService.CollectAllPagesAsync(request, cancellationToken);
+            var collectRequest = _collectSettings.MergeWithDefaults(request);
+            var result = await _productOfferService.CollectAllPagesAsync(collectRequest, cancellationToken);
             if (result.IsFailed)
             {
                 return StatusCode(result.StatusCode, new BaseResponse

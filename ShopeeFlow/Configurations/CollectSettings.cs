@@ -51,4 +51,23 @@ public class CollectSettings
             ScrollId = scrollId
         };
     }
+
+    public SearchProductOffersRequest MergeWithDefaults(SearchProductOffersRequest request)
+    {
+        return new SearchProductOffersRequest
+        {
+            ListType = request.ListType ?? ListType,
+            MatchId = request.MatchId ?? MatchId,
+            Keyword = string.IsNullOrWhiteSpace(request.Keyword) ? Keyword : request.Keyword,
+            SortType = request.SortType ?? SortType,
+            Page = request.Page,
+            Limit = request.Limit,
+            ItemId = request.ItemId,
+            ShopId = request.ShopId,
+            ProductCatId = request.ProductCatId,
+            IsAmsOffer = request.IsAmsOffer ?? IsAmsOffer,
+            IsKeySeller = request.IsKeySeller ?? IsKeySeller,
+            ScrollId = request.ScrollId
+        };
+    }
 }

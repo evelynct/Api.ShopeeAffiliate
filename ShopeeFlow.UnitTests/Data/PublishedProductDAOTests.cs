@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using ShopeeFlow.Configurations;
 using ShopeeFlow.Data;
+using ShopeeFlow.Helpers;
 using ShopeeFlow.Models;
 using ShopeeFlow.UnitTests.TestSupport;
 
@@ -232,6 +233,50 @@ public sealed class PublishedProductDAOTests : IDisposable
 
         Assert.Equal(1, result.InsertedCount);
         Assert.Equal([12L], result.InsertedItemIds);
+    }
+
+    [Fact]
+    public async Task SearchAsync_WhenFilteredByDay_ReturnsPagedItemsAndCounts()
+    {
+        await _dao.EnqueueQualifiedAsync([CreateProduct(1), CreateProduct(2)]);
+        await _dao.MarkAsPostedAsync(1);
+
+        var (startUnix, endUnix) = BrasiliaTimeZone.GetLocalDayBoundsUnix(_timeProvider.GetUtcNow());
+        var result = await _dao.SearchAsync(new PublishedProductSearchFilter
+        {
+            PageNumber = 1,
+            PageSize = 1,
+            CreatedFromUnix = startUnix,
+            CreatedToUnix = endUnix
+        });
+
+        Assert.Equal(2, result.TotalRecords);
+        Assert.Equal(1, result.PostedCount);
+        Assert.Equal(1, result.PendingCount);
+        Assert.Single(result.Items);
+    }
+
+    [Fact]
+    public async Task SearchAsync_WhenIsPostedFilterApplied_ReturnsOnlyMatchingRows()
+    {
+        await _dao.EnqueueQualifiedAsync([CreateProduct(10), CreateProduct(11)]);
+        await _dao.MarkAsPostedAsync(10);
+
+        var (startUnix, endUnix) = BrasiliaTimeZone.GetLocalDayBoundsUnix(_timeProvider.GetUtcNow());
+        var result = await _dao.SearchAsync(new PublishedProductSearchFilter
+        {
+            PageNumber = 1,
+            PageSize = 20,
+            CreatedFromUnix = startUnix,
+            CreatedToUnix = endUnix,
+            IsPosted = false
+        });
+
+        Assert.Equal(1, result.TotalRecords);
+        Assert.Single(result.Items);
+        Assert.Equal(11, result.Items[0].ItemId);
+        Assert.Equal(1, result.PostedCount);
+        Assert.Equal(1, result.PendingCount);
     }
 
     private static PublishedProduct CreateProduct(

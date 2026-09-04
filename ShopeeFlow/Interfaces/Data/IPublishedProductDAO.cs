@@ -14,5 +14,9 @@ public interface IPublishedProductDAO
 
     Task<bool> MarkAsPostedAsync(long itemId, CancellationToken cancellationToken = default);
 
+    Task<PublishedProductSearchResult> SearchAsync(
+        PublishedProductSearchFilter filter,
+        CancellationToken cancellationToken = default);
+
     Task CleanupIfDueAsync(CancellationToken cancellationToken = default);
 }

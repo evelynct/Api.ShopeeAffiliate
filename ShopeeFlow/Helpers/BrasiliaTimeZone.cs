@@ -30,7 +30,13 @@ public static class BrasiliaTimeZone
     {
         var zone = Resolve();
         var local = TimeZoneInfo.ConvertTime(utcNow, zone);
-        var startUnspecified = new DateTime(local.Year, local.Month, local.Day, 0, 0, 0, DateTimeKind.Unspecified);
+        return GetLocalDayBoundsUnix(DateOnly.FromDateTime(local.DateTime));
+    }
+
+    public static (long StartUnix, long EndUnix) GetLocalDayBoundsUnix(DateOnly localDate)
+    {
+        var zone = Resolve();
+        var startUnspecified = new DateTime(localDate.Year, localDate.Month, localDate.Day, 0, 0, 0, DateTimeKind.Unspecified);
         var startOffset = zone.GetUtcOffset(startUnspecified);
         var startLocal = new DateTimeOffset(startUnspecified, startOffset);
         return (startLocal.ToUnixTimeSeconds(), startLocal.AddDays(1).ToUnixTimeSeconds());
