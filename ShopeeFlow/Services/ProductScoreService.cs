@@ -45,6 +45,9 @@ public class ProductScoreService : IProductScoreService
         if (HasBlockedCategory(product))
             return false;
 
+        if (HasBlockedKeyword(product))
+            return false;
+
         if (!BelongsToAllowedNiche(product))
             return false;
 
@@ -66,6 +69,15 @@ public class ProductScoreService : IProductScoreService
             return false;
 
         return product.ProductCatIds.Any(ProductCategoryCatalog.BlockedIds.Contains);
+    }
+
+    private static bool HasBlockedKeyword(ProductOfferV2Dto product)
+    {
+        if (string.IsNullOrWhiteSpace(product.ProductName))
+            return false;
+
+        return ProductCategoryCatalog.BlockedNameKeywords
+            .Any(keyword => product.ProductName.Contains(keyword, StringComparison.OrdinalIgnoreCase));
     }
 
     private static bool BelongsToAllowedNiche(ProductOfferV2Dto product)

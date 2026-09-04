@@ -102,6 +102,35 @@ public class ProductScoreServiceTests
         Assert.Empty(result);
     }
 
+    [Theory]
+    [InlineData("Caixa PIX para Casamento Operação Lua de Mel")]
+    [InlineData("PLACA ABERTO E FECHADO EM ACRÍLICO ESPELHADO")]
+    [InlineData("Porta Aliança Personalizado para Casamento")]
+    public void FilterAndRank_WhenProductNameHasBlockedKeyword_RejectsProduct(string productName)
+    {
+        // Arrange
+        var product = CreateValidProduct(productName: productName);
+
+        // Act
+        var result = _service.FilterAndRank([product]);
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void FilterAndRank_WhenRemovedPartyCategoryIsOnlyMatch_RejectsProduct()
+    {
+        // Arrange — 101270 festa removed from Allowed
+        var product = CreateValidProduct(categoryIds: [100636, 100711, 101270]);
+
+        // Act
+        var result = _service.FilterAndRank([product]);
+
+        // Assert
+        Assert.Empty(result);
+    }
+
     [Fact]
     public void FilterAndRank_WhenProductCatIdsIsNull_DoesNotThrowAndRejectsByNiche()
     {
@@ -332,7 +361,8 @@ public class ProductScoreServiceTests
         string rating = "4.85",
         int discountPercent = 40,
         int[]? categoryIds = null,
-        long itemId = 1)
+        long itemId = 1,
+        string productName = "Produto Casa Teste")
     {
         return new ProductOfferV2Dto
         {
@@ -343,7 +373,7 @@ public class ProductScoreServiceTests
             RatingStar = rating,
             PriceDiscountRate = discountPercent,
             ProductCatIds = categoryIds?.ToList() ?? [101219],
-            ProductName = "Produto Casa Teste"
+            ProductName = productName
         };
     }
 }

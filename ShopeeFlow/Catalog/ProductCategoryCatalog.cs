@@ -12,7 +12,6 @@ public static class ProductCategoryCatalog
 {
     public static readonly IReadOnlyList<ProductCategory> Allowed =
     [
-        new(101165, "Enfeites e objetos decorativos"),
         new(101160, "Tapetes e passadeiras"),
         new(101153, "Flores e arranjos artificiais"),
         new(101161, "Vasos decorativos"),
@@ -28,15 +27,40 @@ public static class ProductCategoryCatalog
         new(101242, "Tigelas e petisqueiras"),
         new(101247, "Acessórios de mesa"),
         new(101262, "Organizadores de parede"),
-        new(101254, "Caixas organizadoras"),
         new(101181, "Vasos para plantas"),
-        new(101270, "Artigos para festa"),
         new(100185, "Televisores"),
         new(100198, "Air fryer"),
         new(100193, "Liquidificador"),
         new(100191, "Chaleira elétrica"),
         new(100194, "Cafeteira elétrica"),
         new(100188, "Suportes e bases para TV")
+    ];
+
+    /// <summary>
+    /// Product name fragments that indicate wedding/pix/signage junk outside the home niche.
+    /// </summary>
+    public static readonly IReadOnlyList<string> BlockedNameKeywords =
+    [
+        "pix",
+        "casamento",
+        "aliança",
+        "alianças",
+        "lua de mel",
+        "operação lua",
+        "operacao lua",
+        "gravata",
+        "noivos",
+        "noiva",
+        "placa aberto",
+        "placa fechado",
+        "qr code",
+        "qrcode",
+        "campainha",
+        "porta aliança",
+        "porta alianças",
+        "urna pix",
+        "cofre pix",
+        "caixa pix"
     ];
 
     public static readonly IReadOnlyList<ProductCategory> Blocked =
