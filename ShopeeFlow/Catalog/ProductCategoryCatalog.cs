@@ -10,6 +10,8 @@ public sealed record ProductCategory(int Id, string Name);
 /// </summary>
 public static class ProductCategoryCatalog
 {
+    public const int CasaRootCategoryId = 100636;
+
     public static readonly IReadOnlyList<ProductCategory> Allowed =
     [
         new(101160, "Tapetes e passadeiras"),
@@ -21,19 +23,28 @@ public static class ProductCategoryCatalog
         new(101220, "Vidros de cozinha"),
         new(101237, "Utensílios de cozinha"),
         new(101173, "Armários de cozinha"),
+        new(101188, "Torneiras"),
+        new(101207, "Lixeiras"),
         new(101239, "Xícaras e canecas"),
         new(101240, "Copos"),
         new(101243, "Pratos"),
         new(101242, "Tigelas e petisqueiras"),
         new(101247, "Acessórios de mesa"),
         new(101262, "Organizadores de parede"),
+        new(101163, "Espelhos"),
         new(101181, "Vasos para plantas"),
+        new(101272, "Bicicletas"),
         new(100185, "Televisores"),
+        new(100625, "Caixas de som e alto-falantes"),
         new(100198, "Air fryer"),
         new(100193, "Liquidificador"),
+        new(100203, "Processadores e picadores de alimentos"),
         new(100191, "Chaleira elétrica"),
         new(100194, "Cafeteira elétrica"),
-        new(100188, "Suportes e bases para TV")
+        new(100188, "Suportes e bases para TV"),
+        new(100661, "Perfumes"),
+        new(100869, "Shampoo, condicionador e kits capilares"),
+        new(100889, "Secadores e escovas alisadoras")
     ];
 
     /// <summary>

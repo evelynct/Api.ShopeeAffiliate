@@ -17,7 +17,7 @@ public class ProductScoreServiceTests
     #region Happy Path
 
     [Fact]
-    public void FilterAndRank_WhenProductIsBalancedAndStrong_ReturnsScoreAtLeast70AndKeepsProduct()
+    public void FilterAndRank_WhenProductIsBalancedAndStrong_ReturnsScoreAtLeast50AndKeepsProduct()
     {
         // Arrange
         var product = CreateValidProduct(
@@ -34,7 +34,7 @@ public class ProductScoreServiceTests
         // Assert
         Assert.Single(result);
         Assert.NotNull(result[0].Score);
-        Assert.True(result[0].Score >= 70);
+        Assert.True(result[0].Score >= 50);
     }
 
     [Fact]
@@ -119,10 +119,75 @@ public class ProductScoreServiceTests
     }
 
     [Fact]
+    public void FilterAndRank_WhenCasaRootIsPresent_AcceptsEvenWithoutAllowedLeaf()
+    {
+        // Arrange
+        var looseSettings = CreateDefaultSettings();
+        looseSettings.MinimumScore = 0;
+        var service = new ProductScoreService(Options.Create(looseSettings));
+        var product = CreateValidProduct(
+            price: "43.99",
+            commissionRate: "0.83",
+            commission: "36.51",
+            rating: "4.70",
+            discountPercent: 30,
+            categoryIds: [100636, 100721, 101999]);
+
+        // Act
+        var result = service.FilterAndRank([product]);
+
+        // Assert
+        Assert.Single(result);
+    }
+
+    [Theory]
+    [InlineData(new[] { 100535, 100582, 100625 })]
+    [InlineData(new[] { 100010, 100041, 100203 })]
+    [InlineData(new[] { 100637, 100725, 101272 })]
+    [InlineData(new[] { 100630, 100661, 0 })]
+    [InlineData(new[] { 100630, 100663, 100889 })]
+    [InlineData(new[] { 100630, 100659, 100869 })]
+    public void FilterAndRank_WhenAllowedLeafOutsideCasaTree_AcceptsProduct(int[] categoryIds)
+    {
+        // Arrange
+        var looseSettings = CreateDefaultSettings();
+        looseSettings.MinimumScore = 0;
+        var service = new ProductScoreService(Options.Create(looseSettings));
+        var product = CreateValidProduct(
+            price: "69.98",
+            commissionRate: "0.13",
+            commission: "12.00",
+            rating: "4.80",
+            discountPercent: 40,
+            categoryIds: categoryIds);
+
+        // Act
+        var result = service.FilterAndRank([product]);
+
+        // Assert
+        Assert.Single(result);
+    }
+
+    [Fact]
     public void FilterAndRank_WhenRemovedPartyCategoryIsOnlyMatch_RejectsProduct()
     {
-        // Arrange — 101270 festa removed from Allowed
-        var product = CreateValidProduct(categoryIds: [100636, 100711, 101270]);
+        // Arrange — 101270 festa removed and path is not Casa
+        var product = CreateValidProduct(categoryIds: [100010, 100040, 101270]);
+
+        // Act
+        var result = _service.FilterAndRank([product]);
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void FilterAndRank_WhenCasaRootIsPresentButKeywordBlocked_RejectsProduct()
+    {
+        // Arrange
+        var product = CreateValidProduct(
+            categoryIds: [100636, 100711, 101165],
+            productName: "Kit Placa Pix Personalizada");
 
         // Act
         var result = _service.FilterAndRank([product]);
@@ -180,9 +245,9 @@ public class ProductScoreServiceTests
     }
 
     [Fact]
-    public void FilterAndRank_WhenPriceAtMinimumButCommissionValueBelowFloor_RejectsProduct()
+    public void FilterAndRank_WhenPriceAtMinimumAndRateMeetsFloorButValueBelow_AcceptsProduct()
     {
-        // Arrange
+        // Arrange — R$ 20 @ 10% = R$ 2 (rate passes OR floor, value does not)
         var product = CreateValidProduct(
             price: "20.00",
             commissionRate: "0.10",
@@ -192,14 +257,13 @@ public class ProductScoreServiceTests
         var result = _service.FilterAndRank([product]);
 
         // Assert
-        Assert.Empty(result);
+        Assert.Single(result);
     }
 
     [Theory]
     [InlineData("0.08", "4.00")]
-    [InlineData("0.12", "6.00")]
-    [InlineData("0.10", "9.99")]
-    public void FilterAndRank_WhenCommissionValueBelowMinimum_RejectsProduct(
+    [InlineData("0.09", "8.00")]
+    public void FilterAndRank_WhenCommissionRateAndValueBothBelowMinimum_RejectsProduct(
         string commissionRate,
         string commission)
     {
@@ -226,6 +290,27 @@ public class ProductScoreServiceTests
             price: "200.00",
             commissionRate: "0.07",
             commission: "14.00",
+            rating: "4.90",
+            discountPercent: 30);
+
+        // Act
+        var result = service.FilterAndRank([product]);
+
+        // Assert
+        Assert.Single(result);
+    }
+
+    [Fact]
+    public void FilterAndRank_WhenCommissionRateMeetsMinimumButValueBelowFloor_AcceptsProduct()
+    {
+        // Arrange — torneira-style: 23% rate, R$ 5.75 commission
+        var looseSettings = CreateDefaultSettings();
+        looseSettings.MinimumScore = 0;
+        var service = new ProductScoreService(Options.Create(looseSettings));
+        var product = CreateValidProduct(
+            price: "25.00",
+            commissionRate: "0.23",
+            commission: "5.75",
             rating: "4.90",
             discountPercent: 30);
 
@@ -281,7 +366,7 @@ public class ProductScoreServiceTests
     public void FilterAndRank_WhenScoreBelowMinimum_RejectsProduct()
     {
         // Arrange
-        // Passes hard filters but weak score: low rate just over dual floor via value, tiny discount, rating 4.0
+        // Passes hard filters but weak score: 10% rate floor, R$ 10 value, tiny discount, rating 4.0
         var product = CreateValidProduct(
             price: "20.00",
             commissionRate: "0.10",
@@ -347,7 +432,7 @@ public class ProductScoreServiceTests
 
     private static ScoringSettings CreateDefaultSettings() => new()
     {
-        MinimumScore = 70,
+        MinimumScore = 50,
         MinimumPrice = 20m,
         MinimumRating = 4.0m,
         MinimumCommissionRatePercent = 10m,

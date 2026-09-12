@@ -257,6 +257,35 @@ public class ProductOfferServiceTests
     }
 
     [Fact]
+    public async Task SearchAsync_WhenTopPerformingWithRelevanceSortWithoutKeyword_DoesNotRequireKeyword()
+    {
+        var request = new SearchProductOffersRequest
+        {
+            ListType = ProductOfferListType.TopPerforming,
+            SortType = ProductOfferSortType.RelevanceDesc,
+            Limit = 20
+        };
+
+        _graphQlClientMock
+            .Setup(client => client.ExecuteAsync<ProductOfferV2GraphQlData>(
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<ProductOfferV2GraphQlData>.Ok(new ProductOfferV2GraphQlData
+            {
+                ProductOfferV2 = new ProductOfferListResponseDto { Nodes = [] }
+            }));
+
+        var result = await _service.SearchAsync(request);
+
+        Assert.True(result.IsSuccess);
+        _graphQlClientMock.Verify(
+            client => client.ExecuteAsync<ProductOfferV2GraphQlData>(
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
     public async Task SearchAsync_WhenGraphQlClientFails_ReturnsSameFailure()
     {
         var request = new SearchProductOffersRequest { Limit = 1 };

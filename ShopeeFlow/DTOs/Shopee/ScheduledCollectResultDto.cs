@@ -9,4 +9,8 @@ public class ScheduledCollectResultDto
     public int DailyCollectedCount { get; set; }
 
     public int DailyCollectLimit { get; set; }
+
+    public int ScannedCount { get; set; }
+
+    public int QualifiedCount { get; set; }
 }

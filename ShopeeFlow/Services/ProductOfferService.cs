@@ -68,7 +68,9 @@ public class ProductOfferService : IProductOfferService
         ApplyDerivedPrices(offers.Nodes);
         offers.Nodes ??= [];
         offers.PageInfo ??= new ProductOfferPageInfoDto();
+        offers.ScannedCount = offers.Nodes.Count;
         offers.Nodes = _productScoreService.FilterAndRank(offers.Nodes);
+        offers.QualifiedCount = offers.Nodes.Count;
 
         var enqueueResult = await _publishedProductDAO.EnqueueQualifiedAsync(
             offers.Nodes.Select(ToPublishedProduct).ToList(),
@@ -91,6 +93,8 @@ public class ProductOfferService : IProductOfferService
     {
         var pagesProcessed = 0;
         var insertedCount = 0;
+        var scannedCount = 0;
+        var qualifiedCount = 0;
         var page = ProductOfferLimits.MinimumPage;
         string? scrollId = null;
         var dailyCollectedCount = 0;
@@ -106,6 +110,8 @@ public class ProductOfferService : IProductOfferService
 
             pagesProcessed++;
             insertedCount += result.Value!.InsertedCount;
+            scannedCount += result.Value.ScannedCount;
+            qualifiedCount += result.Value.QualifiedCount;
             dailyCollectedCount = result.Value.DailyCollectedCount;
             dailyCollectLimit = result.Value.DailyCollectLimit;
 
@@ -131,6 +137,8 @@ public class ProductOfferService : IProductOfferService
         {
             PagesProcessed = pagesProcessed,
             InsertedCount = insertedCount,
+            ScannedCount = scannedCount,
+            QualifiedCount = qualifiedCount,
             DailyCollectedCount = dailyCollectedCount,
             DailyCollectLimit = dailyCollectLimit
         });
@@ -194,7 +202,9 @@ public class ProductOfferService : IProductOfferService
         if (RequiresMatchId(request.ListType) && !request.MatchId.HasValue)
             return $"MatchId is required when ListType is {request.ListType}.";
 
-        if (request.SortType == ProductOfferSortType.RelevanceDesc && string.IsNullOrWhiteSpace(request.Keyword))
+        if (request.SortType == ProductOfferSortType.RelevanceDesc
+            && string.IsNullOrWhiteSpace(request.Keyword)
+            && request.ListType is not ProductOfferListType.TopPerforming)
         {
             return "Keyword is required when SortType is RelevanceDesc.";
         }

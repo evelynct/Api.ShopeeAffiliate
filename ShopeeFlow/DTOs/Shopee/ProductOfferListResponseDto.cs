@@ -18,4 +18,10 @@ public class ProductOfferListResponseDto
 
     [JsonPropertyName("insertedCount")]
     public int InsertedCount { get; set; }
+
+    [JsonPropertyName("scannedCount")]
+    public int ScannedCount { get; set; }
+
+    [JsonPropertyName("qualifiedCount")]
+    public int QualifiedCount { get; set; }
 }

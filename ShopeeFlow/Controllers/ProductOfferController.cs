@@ -28,7 +28,7 @@ public class ProductOfferController : ControllerBase
 
     /// <summary>Collect qualified product offers into the SQLite queue (paginates until daily limit or no more pages).</summary>
     /// <remarks>
-    /// Omit query params to use Collect settings from appsettings (Casa + commission sort).
+    /// Omit query params to use Collect settings (Top Performing, sortType=1, limit=20). No IsAmsOffer.
     /// Limit controls page size per Shopee request (default 50); the endpoint keeps paging until the daily quota is filled.
     /// </remarks>
     [HttpGet]

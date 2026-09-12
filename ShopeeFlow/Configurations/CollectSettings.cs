@@ -30,6 +30,8 @@ public class CollectSettings
 
     public bool? IsKeySeller { get; set; }
 
+    public int? ProductCatId { get; set; }
+
     public int GetHourOrDefault() => Hour is >= 0 and <= 23 ? Hour : DefaultHour;
 
     public int GetMinuteOrDefault() => Minute is >= 0 and <= 59 ? Minute : DefaultMinute;
@@ -48,6 +50,7 @@ public class CollectSettings
             Limit = GetLimitOrDefault(),
             IsAmsOffer = IsAmsOffer,
             IsKeySeller = IsKeySeller,
+            ProductCatId = ProductCatId,
             ScrollId = scrollId
         };
     }
@@ -64,7 +67,7 @@ public class CollectSettings
             Limit = request.Limit,
             ItemId = request.ItemId,
             ShopId = request.ShopId,
-            ProductCatId = request.ProductCatId,
+            ProductCatId = request.ProductCatId ?? ProductCatId,
             IsAmsOffer = request.IsAmsOffer ?? IsAmsOffer,
             IsKeySeller = request.IsKeySeller ?? IsKeySeller,
             ScrollId = request.ScrollId

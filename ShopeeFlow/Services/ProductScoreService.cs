@@ -85,13 +85,21 @@ public class ProductScoreService : IProductScoreService
         if (ProductCategoryCatalog.AllowedIds.Count == 0)
             return false;
 
+        if (product.ProductCatIds.Contains(ProductCategoryCatalog.CasaRootCategoryId))
+            return true;
+
         return product.ProductCatIds.Any(ProductCategoryCatalog.AllowedIds.Contains);
     }
 
     private bool PassesCommissionHardFilter(ProductOfferV2Dto product)
     {
-        return ProductValueParser.TryParseDecimal(product.Commission, out var commissionValue)
-            && commissionValue >= _settings.MinimumCommissionValue;
+        var hasRate = ProductValueParser.TryParseCommissionRatePercent(product.CommissionRate, out var ratePercent);
+        var hasValue = ProductValueParser.TryParseDecimal(product.Commission, out var commissionValue);
+
+        var rateOk = hasRate && ratePercent >= _settings.MinimumCommissionRatePercent;
+        var valueOk = hasValue && commissionValue >= _settings.MinimumCommissionValue;
+
+        return rateOk || valueOk;
     }
 
     private static int CalculateScore(ProductOfferV2Dto product)
